@@ -1,44 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-  <title>Speech Recognition </title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Recognition Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 1.5em;
+            color: green;
+        }
+        #status {
+            margin-top: 10px;
+            font-size: 1.2em;
+            color: red;
+        }
+    </style>
 </head>
-
 <body>
-  <button id="start" onclick="startRecognition()"> Start Recognition</button>
-  <button id="end" onclick="stopRecognition()"> Stop Recognition</button>
-  <p id="output"></p>
+    <h1>Speech Recognition with Web Speech API</h1>
+    <button id="startBtn">Start Recognition</button>
+    <button id="stopBtn" disabled>Stop Recognition</button>
+    <div id="status"></div>
+    <div id="result"></div>
 
+    <script>
+        // Check if the browser supports Speech Recognition
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  <script>
-    const output = document.getElementById('output');
-    let recognition;
+        if (!SpeechRecognition) {
+            document.getElementById('status').innerHTML = "Speech Recognition not supported in this browser.";
+        } else {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-US'; // Language of speech
+            recognition.interimResults = true; // Show partial results
+            recognition.maxAlternatives = 1; // Show only the best match
+            recognition.continuous = true; // Keep listening until manually stopped
 
-    function startRecognition() {
-      recognition = new webkitSpeechRecognition() || new SpeechRecognition();
-      recognition.lang = 'en-US';
-      recognition.continuous = true;
-      recognition.onresult = function (event) {
-        const transcript = event.results[event.results.length - 1][0].transcript;
-        output.textContent = transcript;
-      };
-      recognition.onend = function () {
-        recognition.start();
-      };
-      recognition.start();
-    };
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const resultDiv = document.getElementById('result');
+            const statusDiv = document.getElementById('status');
 
-    function stopRecognition() {
-      recognition.stop();
-      output.innerHTML = '';
-    };
+            // Start Recognition
+            startBtn.addEventListener('click', () => {
+                recognition.start();
+                statusDiv.innerHTML = "Listening...";
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+            });
 
-  </script>
+            // Stop Recognition manually
+            stopBtn.addEventListener('click', () => {
+                recognition.stop();
+                statusDiv.innerHTML = "Stopped listening.";
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            });
 
+            // Handle results
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                resultDiv.textContent = transcript;
+                console.log("Recognized speech:", transcript);
+            };
 
+            // Handle end of recognition
+            recognition.onend = () => {
+                // Recognition ends when stopped or interrupted
+                console.log('Recognition has ended');
+                if (!recognition.continuous) {
+                    statusDiv.innerHTML = "Recognition ended.";
+                }
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            };
 
+            // Handle errors
+            recognition.onerror = (event) => {
+                statusDiv.innerHTML = "Error: " + event.error;
+                console.log("Error in recognition:", event.error);
+            };
+        }
+    </script>
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
 </body>
-
 </html>
